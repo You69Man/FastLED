@@ -60,7 +60,8 @@ static int16_t inline __attribute__((always_inline))  avg15_inline_avr_mul( int1
 #define FADE logfade12
 #define LERP(a,b,u) lerp15by12(a,b,u)
 #else
-#define FADE(x) scale16(x,x)
+//#define FADE(x) scale16(x,x)
+#define FADE(x) ((!(x&0x8000))?x=scale16(x,x)<<1:x=0xffff-scale16(0xffff-x,0xffff-x)<<1)
 #define LERP(a,b,u) lerp15by16(a,b,u)
 #endif
 static int16_t inline __attribute__((always_inline))  grad16(uint8_t hash, int16_t x, int16_t y, int16_t z) {
@@ -438,8 +439,11 @@ int8_t inoise8_raw(uint16_t x, uint16_t y, uint16_t z)
   uint8_t N = 0x80;
 
   // u = FADE(u); v = FADE(v); w = FADE(w);
-  u = scale8_LEAVING_R1_DIRTY(u,u); v = scale8_LEAVING_R1_DIRTY(v,v); w = scale8(w,w);
-
+  // u = scale8_LEAVING_R1_DIRTY(u,u); v = scale8_LEAVING_R1_DIRTY(v,v); w = scale8(w,w);
+  (!(u&0x80))?u=scale8_LEAVING_R1_DIRTY(u,u)<<1:u=0xff-scale8_LEAVING_R1_DIRTY(0xff-u,0xff-u)<<1;
+  (!(v&0x80))?v=scale8_LEAVING_R1_DIRTY(v,v)<<1:v=0xff-scale8_LEAVING_R1_DIRTY(0xff-v,0xff-v)<<1;
+  (!(w&0x80))?w=scale8(w,w)<<1:w=0xff-scale8(0xff-w,0xff-w)<<1;
+  
   int8_t X1 = lerp7by8(grad8(P(AA), xx, yy, zz), grad8(P(BA), xx - N, yy, zz), u);
   int8_t X2 = lerp7by8(grad8(P(AB), xx, yy-N, zz), grad8(P(BB), xx - N, yy - N, zz), u);
   int8_t X3 = lerp7by8(grad8(P(AA+1), xx, yy, zz-N), grad8(P(BA+1), xx - N, yy, zz-N), u);
@@ -481,7 +485,9 @@ int8_t inoise8_raw(uint16_t x, uint16_t y)
   uint8_t N = 0x80;
 
   // u = FADE(u); v = FADE(v); w = FADE(w);
-  u = scale8_LEAVING_R1_DIRTY(u,u); v = scale8(v,v);
+  // u = scale8_LEAVING_R1_DIRTY(u,u); v = scale8(v,v);
+  (!(u&0x80))?u=scale8_LEAVING_R1_DIRTY(u,u)<<1:u=0xff-scale8_LEAVING_R1_DIRTY(0xff-u,0xff-u)<<1;
+  (!(v&0x80))?v=scale8(v,v)<<1:v=0xff-scale8(0xff-v,0xff-v)<<1;
 
   int8_t X1 = lerp7by8(grad8(P(AA), xx, yy), grad8(P(BA), xx - N, yy), u);
   int8_t X2 = lerp7by8(grad8(P(AB), xx, yy-N), grad8(P(BB), xx - N, yy - N), u);
@@ -514,7 +520,8 @@ int8_t inoise8_raw(uint16_t x)
   int8_t xx = ((uint8_t)(x)>>1) & 0x7F;
   uint8_t N = 0x80;
 
-  u = scale8(u,u);
+  //u = scale8(u,u);
+  (!(u&0x80))?u=scale8(u,u)<<1:u=0xff-scale8(0xff-u,0xff-u)<<1;
 
   int8_t ans = lerp7by8(grad8(P(AA), xx), grad8(P(BA), xx - N), u);
 
